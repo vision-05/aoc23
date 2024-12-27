@@ -23,8 +23,11 @@
 (defn merge-maps [l]
   (apply merge-with max (all->int (make-maps l))))
 
-(defn is-impossible? [l]
-  (filter #(neg? (val %)) (merge-with - {\b 14 \r 12 \g 13} (merge-maps l))))
+(defn filter-impossible [l]
+  (filter #(neg? (val %)) (merge-with - {\b 14 \r 12 \g 13} l)))
+
+(defn find-max [l]
+  (apply merge {\b 0 \r 0 \g 0} l))
 
 (defn conj-idx [a i]
   (conj a i))
@@ -33,5 +36,16 @@
   "I don't do a whole lot ... yet."
   [fname]
   (with-open [r (clojure.java.io/reader fname)]
-    (let [lines (line-seq r)]
-      (prn (reduce + (flatten (filter (fn [c] (= (count c) 1)) (map conj-idx (map #(is-impossible? (parse-line % tokens)) lines) (map inc (range (count lines)))))))))))
+    (let [lines (line-seq r)
+          parsed (map #(parse-line % tokens) lines)
+          lexed (map merge-maps parsed)
+          filtered (map filter-impossible lexed)
+          indices (map inc (range (count lines)))
+          indexed (map conj-idx filtered indices)
+          any-val (filter #(= (count %) 1) indexed)
+          sum-tot (reduce + (flatten any-val))
+          max-cols (map find-max lexed)
+          mul-games (map #(reduce * (vals %)) max-cols)
+          powers (reduce + mul-games)]
+      (prn sum-tot)
+      (prn powers))))
